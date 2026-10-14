@@ -3,6 +3,7 @@
 #   curl -sL https://raw.githubusercontent.com/ianmarcos12/runpod-trabalhador/main/instalar_maquina.sh | bash
 # Baixa o trabalhador e o vigia, instala o Blender (se faltar), desliga o Jupyter (libera a porta 8888),
 # gera o token e liga o trabalhador e o vigia. Pode rodar de novo sem problema (reaproveita o token).
+# Para trocar o token: rm /workspace/.token_trabalhador e rode de novo.
 set -e
 URL="https://raw.githubusercontent.com/ianmarcos12/runpod-trabalhador/main"
 mkdir -p /workspace/maq/runpod /workspace/maq/modelos3d/hdri /workspace/jobs
@@ -10,10 +11,14 @@ cd /workspace/maq/runpod
 curl -sfL "$URL/trabalhador_http.py" -o trabalhador_http.py
 curl -sfL "$URL/parar_se_ocioso.sh" -o parar_se_ocioso.sh
 echo "1/4 arquivos baixados: $(ls | tr '\n' ' ')"
-if [ ! -x /workspace/blender-linux/blender ]; then
-  echo "2/4 instalando o Blender (2 a 5 minutos)..."
+# bibliotecas do sistema ficam fora de /workspace e somem quando a máquina reinicia: confere sempre
+if ! dpkg -s libxi6 libxkbcommon0 libgl1 libxxf86vm1 libxfixes3 libxrender1 libsm6 libegl1 xz-utils wget >/dev/null 2>&1; then
+  echo "2/4 instalando bibliotecas do sistema..."
   apt-get update -qq >/dev/null 2>&1 || true
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libxi6 libxkbcommon0 libgl1 libxxf86vm1 libxfixes3 libxrender1 libsm6 libegl1 xz-utils wget >/dev/null 2>&1
+fi
+if [ ! -x /workspace/blender-linux/blender ]; then
+  echo "2/4 instalando o Blender (2 a 5 minutos)..."
   cd /workspace
   wget -q -O blender.tar.xz https://download.blender.org/release/Blender5.2/blender-5.2.2-linux-x64.tar.xz
   tar -xf blender.tar.xz && mv blender-5.2.2-linux-x64 blender-linux && rm blender.tar.xz
